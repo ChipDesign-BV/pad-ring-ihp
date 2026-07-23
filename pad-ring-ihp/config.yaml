@@ -1,0 +1,98 @@
+meta:
+  version: 2
+  flow: Chip           # librelane/flows/chip.py: Classic + PadRing + SealRing + Filler + Density
+  substituting_steps:
+    Verilator.Lint: null   # verilator not runnable in this environment; lint not needed for padring
+
+DESIGN_NAME: chip_top
+
+VERILOG_FILES:
+  - dir::src/chip_top.v
+  - dir::src/demo_core.v
+
+# ---- Clock -----------------------------------------------------------------
+# Clock enters via the clk input pad; core-side clock net is clk_i.
+CLOCK_NET: clk_i
+CLOCK_PERIOD: 20
+
+PNR_SDC_FILE: dir::constraint.sdc
+SIGNOFF_SDC_FILE: dir::constraint.sdc
+FALLBACK_SDC: dir::constraint.sdc
+
+# ---- Synthesis -------------------------------------------------------------
+# flatten so hierarchical pad instance names (e.g. sg13g2_IOPad_dout[0]....)
+# survive as the flat instance names referenced in the PAD_* lists below.
+SYNTH_HIERARCHY_MODE: flatten
+
+# ---- Floorplan (absolute die; sized for 8 pads/side at 150 um pad pitch) ---
+# The placer distributes pads evenly, so the pitch follows from the die size:
+#   gap = pitch - pad_width = 150 - 80 = 70 um
+#   side = 2*140 (edge) + 2*180 (corners) + 8*80 (pads) + 9*70 (gaps) = 1910 um
+# 630/9 = 70 exactly -> uniform 150 um centre-to-centre pitch, incl. end gaps.
+FP_SIZING: absolute
+DIE_AREA: [0, 0, 1910, 1910]
+
+# ---- Power nets ------------------------------------------------------------
+VDD_NETS: [VDD]
+GND_NETS: [VSS]
+
+# ---- Pad ring --------------------------------------------------------------
+# The IHP sg13g2_IOPad* cells have their wire-bond opening integrated
+# (Liberty bond_pads:1), so no separate bondpad cell is placed. This overrides
+# the PDK default PAD_BONDPAD_NAME=bondpad_70x70, which is not shipped on disk.
+PAD_BONDPAD_NAME: null
+
+# Pad instance names, in placement order per side. Names must match instances
+# in src/chip_top.v. Instances created inside generate loops carry the
+# "<genblk>[i].<inst>" form and must be escaped for YAML/regex.
+PAD_SOUTH: [
+    sg13g2_IOPad_io_clk,
+    sg13g2_IOPad_io_rst,
+    "sg13g2_IOPad_din_lo\\[0\\].sg13g2_IOPad_io_din",
+    "sg13g2_IOPad_din_lo\\[1\\].sg13g2_IOPad_io_din",
+    "sg13g2_IOPad_din_lo\\[2\\].sg13g2_IOPad_io_din",
+    "sg13g2_IOPad_din_lo\\[3\\].sg13g2_IOPad_io_din",
+    "sg13g2_IOPad_din_lo\\[4\\].sg13g2_IOPad_io_din",
+    "sg13g2_IOPad_din_lo\\[5\\].sg13g2_IOPad_io_din"
+]
+
+PAD_WEST: [
+    sg13g2_IOPad_iovdd_w,
+    sg13g2_IOPad_iovss_w,
+    "sg13g2_IOPad_din_hi\\[0\\].sg13g2_IOPad_io_din",
+    "sg13g2_IOPad_din_hi\\[1\\].sg13g2_IOPad_io_din",
+    sg13g2_IOPad_io_start,
+    sg13g2_IOPad_io_mode,
+    sg13g2_IOPad_vdd_w,
+    sg13g2_IOPad_vss_w
+]
+
+PAD_NORTH: [
+    "sg13g2_IOPad_dout\\[0\\].sg13g2_IOPad_io_dout",
+    "sg13g2_IOPad_dout\\[1\\].sg13g2_IOPad_io_dout",
+    "sg13g2_IOPad_dout\\[2\\].sg13g2_IOPad_io_dout",
+    "sg13g2_IOPad_dout\\[3\\].sg13g2_IOPad_io_dout",
+    "sg13g2_IOPad_dout\\[4\\].sg13g2_IOPad_io_dout",
+    "sg13g2_IOPad_dout\\[5\\].sg13g2_IOPad_io_dout",
+    "sg13g2_IOPad_dout\\[6\\].sg13g2_IOPad_io_dout",
+    "sg13g2_IOPad_dout\\[7\\].sg13g2_IOPad_io_dout"
+]
+
+PAD_EAST: [
+    sg13g2_IOPad_iovdd_e,
+    sg13g2_IOPad_iovss_e,
+    sg13g2_IOPad_io_done,
+    sg13g2_IOPad_io_busy,
+    sg13g2_IOPad_io_irq,
+    sg13g2_IOPad_io_gpio,
+    sg13g2_IOPad_vdd_e,
+    sg13g2_IOPad_vss_e
+]
+
+# Pad power/ground modules are intentionally disconnected in the netlist
+# (the ring rails are joined physically by connect_by_abutment).
+IGNORE_DISCONNECTED_MODULES:
+  - sg13g2_IOPadIOVdd
+  - sg13g2_IOPadIOVss
+  - sg13g2_IOPadVdd
+  - sg13g2_IOPadVss

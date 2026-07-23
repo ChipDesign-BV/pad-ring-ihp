@@ -1,0 +1,20 @@
+# SPDX-License-Identifier: Apache-2.0
+# Koen Van Caekenberghe (koen.vancaekenberghe@chipdesign.be), ChipDesign B.V., 07.2026
+# Project xschemrc — sources the IHP SG13G2 PDK xschem setup, then adds the
+# project directory. Launch xschem from this directory so it is picked up:
+#   cd xschem && xschem chip_top.sch
+
+if { ![info exists env(PDK_ROOT)] } { set env(PDK_ROOT) {/foss/pdks} }
+if { ![info exists env(PDK)] }      { set env(PDK) {ihp-sg13g2} }
+
+source $env(PDK_ROOT)/$env(PDK)/libs.tech/xschem/xschemrc
+
+# project schematics (chip_top.sch lives here)
+set PROJECT_XSCHEM [file dirname [file normalize [info script]]]
+append XSCHEM_LIBRARY_PATH :$PROJECT_XSCHEM
+
+# keep netlists out of the source tree
+set netlist_dir $PROJECT_XSCHEM/netlist
+
+# start with an empty window instead of the PDK start page
+set XSCHEM_START_WINDOW {}
