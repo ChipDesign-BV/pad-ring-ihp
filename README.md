@@ -25,8 +25,12 @@ A full write-up of the method — with the driver script, the Verilog pad idioms
 Requirements: [LibreLane](https://github.com/librelane/librelane) 3.1+ with its tool set
 (Yosys, OpenROAD, KLayout) and the
 [IHP SG13G2 open PDK](https://github.com/IHP-GmbH/IHP-Open-PDK) at `$PDK_ROOT`.
-`env.sh` exports `PDK_ROOT`/`PDK` (overridable) and adds common EDA tool locations to
-`PATH` when they exist.
+The easiest way to get all of this is the
+[IIC-OSIC-TOOLS](https://github.com/iic-jku/IIC-OSIC-TOOLS) container (this project was
+developed and verified in release 2026.06), which ships every tool and the PDK
+pre-installed. `env.sh` exports `PDK_ROOT`/`PDK` (overridable) and adds common EDA tool
+locations to `PATH` when they exist, so the flow also runs in any other environment with
+the tools on `PATH`.
 
 ```sh
 . ./env.sh                # export PDK_ROOT / PDK for this shell
@@ -37,6 +41,9 @@ python3 scripts/check_padring.py runs/RUN_*/16-openroad-padring/chip_top.def --p
 
 # render the layout to PNG (headless KLayout, PDK layer colours)
 python3 scripts/render_padring.py runs/RUN_*/16-openroad-padring/chip_top.def padring.png
+
+# view/edit the pad-ring schematic (uses the PDK sg13g2_io xschem symbols)
+cd xschem && xschem chip_top.sch
 ```
 
 Drop the `--to OpenROAD.PadRing` flag inside `gen_padring.sh` (or pass your own `--to`)
@@ -79,6 +86,7 @@ and the 140 µm seal-ring inset are inherited automatically.
 | `gen_padring.sh` | Driver: runs the flow up to `OpenROAD.PadRing` |
 | `scripts/check_padring.py` | Verifies uniform pitch + gap-free ring closure from the DEF |
 | `scripts/render_padring.py` | DEF + IO-GDS → layout PNG (headless KLayout, PDK palette) |
+| `xschem/chip_top.sch` | xschem schematic of the pad ring (PDK `sg13g2_io` symbols, mirrors `chip_top.v`) |
 | `doc/` | Report sources + built `report.pdf` (pandoc + LaTeX) |
 
 ## Adapting to your design
@@ -113,7 +121,9 @@ other foundry data is used or referenced. Full details with roles in
 | OpenROAD | 26Q2-2270 | BSD-3-Clause |
 | Yosys | 0.66 | ISC |
 | KLayout (Python module) | 0.30.9 | GPL-3.0-or-later |
+| xschem (schematic) | 3.4.8RC | GPL-2.0-or-later |
 | Python | 3.12.3 | PSF-2.0 |
+| IIC-OSIC-TOOLS (container, optional) | 2026.06 | Apache-2.0 |
 | Pandoc (docs) | 3.1.3 | GPL-2.0-or-later |
 | Tectonic — LaTeX engine (docs) | 0.15.0 | MIT |
 | Matplotlib (figures) | 3.11.0 | Matplotlib License |

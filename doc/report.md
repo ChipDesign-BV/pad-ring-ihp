@@ -226,6 +226,20 @@ Buses of pads are built with a `generate` loop; the resulting instance names tak
 form `sg13g2_IOPad_dout[0].sg13g2_IOPad_io_dout`, which is why those entries are bracket-escaped in
 the configuration.
 
+The same structure is captured as an **xschem schematic** in `xschem/chip_top.sch`, drawn with the
+PDK's own `sg13g2_io` symbols and arranged like the physical ring: the north/south banks along the
+top and bottom, the west/east banks (including the four supply-pad pairs) at the sides, and the
+`demo_core` block in the centre. Every pad pin carries its net label, so netlisting the schematic
+(`cd xschem && xschem --no_x -q -n chip_top.sch`) reproduces the connectivity of `chip_top.v` — all
+32 pads with their rail, core-side and bond-pad nets. Corner and filler cells have no schematic view
+(they are physical-only); the ring rails `VDD`/`VSS`/`IOVDD`/`IOVSS` join by abutment in layout.
+
+![xschem schematic of the pad ring (`xschem/chip_top.sch`), drawn with the PDK `sg13g2_io`
+symbols: north bank (`dout` pads) on top, south bank (clock, reset, `din` low bits) at the
+bottom, west and east banks with the supply pads at the sides, and the `demo_core` block in
+the centre. Each pad shows its ESD network, driver/receiver and bond-pad octagon; net labels
+match `src/chip_top.v`.](fig/padring_schematic.png){width=100%}
+
 ---
 
 # 6. Assigning pads to sides in `config.yaml` (line by line)
@@ -348,7 +362,10 @@ Files     : src/chip_top.v   chip top, instantiates the pad ring
             env.sh               PDK_ROOT / PDK, tool-path setup
             gen_padring.sh      driver (see §4)
             scripts/render_padring.py  DEF+GDS -> layout PNG (fig below)
+            xschem/chip_top.sch  xschem schematic of the ring (PDK symbols)
 Run       : ./gen_padring.sh
+Environment: IIC-OSIC-TOOLS 2026.06 container (all tools + PDK pre-installed);
+             any setup with librelane/yosys/openroad/klayout on PATH also works
 PDK       : ihp-sg13g2 @ $PDK_ROOT   (LibreLane 3.1, --manual-pdk)
 Output    : runs/RUN_*/16-openroad-padring/chip_top.def
 Check     : scripts/check_padring.py <def> --pitch 150   (PASS required)
@@ -375,7 +392,9 @@ PDK**. No other foundry's libraries, rules or documentation are used or referenc
 | [OpenROAD](https://github.com/The-OpenROAD-Project/OpenROAD) | 26Q2-2270-g4c26918f5 | BSD-3-Clause | Floorplan, ODB, built-in pad placer (`make_io_sites`, `place_pad`, `place_corners`, `place_io_fill`, `connect_by_abutment`) |
 | [Yosys](https://github.com/YosysHQ/yosys) | 0.66 | ISC | Synthesis of the chip top (pad instances kept via `(* keep *)`) |
 | [KLayout](https://www.klayout.de) (Python module) | 0.30.9 | GPL-3.0-or-later | GDS assembly and headless rendering (`scripts/render_padring.py`) |
+| [xschem](https://xschem.sourceforge.io) | 3.4.8RC | GPL-2.0-or-later | Schematic capture of the pad ring (`xschem/chip_top.sch`, PDK `sg13g2_io` symbols) and netlist cross-check |
 | [Python](https://www.python.org) | 3.12.3 | PSF-2.0 | Scripts (`check_padring.py`, `render_padring.py`, filters) |
+| [IIC-OSIC-TOOLS](https://github.com/iic-jku/IIC-OSIC-TOOLS) | 2026.06 | Apache-2.0 | Container image used for development and verification — ships all of the above and the PDK pre-installed (optional: any environment with the tools on `PATH` works) |
 
 **Used to build this documentation** (`doc/build.sh`):
 
@@ -388,8 +407,8 @@ PDK**. No other foundry's libraries, rules or documentation are used or referenc
 Notes:
 
 * The full `Chip` flow (beyond the `OpenROAD.PadRing` stop) additionally uses **Magic**,
-  **Netgen** and the **KLayout DRC/LVS decks** from the IHP PDK — all open-source, none
-  foundry-encumbered beyond the IHP PDK itself.
+  **Netgen** and the **KLayout DRC/LVS decks** from the IHP PDK — all open-source (and all
+  shipped in IIC-OSIC-TOOLS 2026.06), none foundry-encumbered beyond the IHP PDK itself.
 * The `Verilator.Lint` step is disabled in `config.yaml` and Verilator is therefore not
   used.
 * The report is plain Markdown compiled to PDF via pandoc's default LaTeX template —
