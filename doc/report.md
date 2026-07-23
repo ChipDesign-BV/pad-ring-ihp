@@ -2,7 +2,8 @@
 title: "Pad Ring Generation with LibreLane for the IHP SG13G2 Process"
 subtitle: "Method, driver script (line by line), and the generated pad-ring layout of the chip_top demonstrator"
 author:
-  - "Koen Van Caekenberghe, Ph.D. — ChipDesign B.V. — [info@chipdesign.be](mailto:info@chipdesign.be)"
+  - "Koen Van Caekenberghe, Ph.D. — ChipDesign B.V."
+  - "[info@chipdesign.be](mailto:info@chipdesign.be)"
 date: "2026-07-22"
 documentclass: article
 papersize: a4
@@ -14,6 +15,21 @@ colorlinks: true
 linkcolor: NavyBlue
 urlcolor: NavyBlue
 toc: true
+header-includes:
+  - |
+    ```{=latex}
+    % --- overflow control -------------------------------------------------
+    % allow hyphenation inside \texttt (paths, cell and net names)
+    \usepackage[htt]{hyphenat}
+    % tables and code blocks in a smaller font
+    \usepackage{etoolbox}
+    \AtBeginEnvironment{longtable}{\small}
+    \fvset{fontsize=\small}
+    \makeatletter\def\verbatim@font{\ttfamily\small}\makeatother
+    % prefer loose spacing over overfull lines
+    \sloppy
+    \emergencystretch=3em
+    ```
 ---
 
 # 1. Scope and method
@@ -65,7 +81,7 @@ cell classes are:
 | Tri-state | `sg13g2_IOPadTriOut{4,16,30}mA` | driver with output-enable |
 | Bidirectional | `sg13g2_IOPadInOut{4,16,30}mA` | driver + receiver + enable |
 | Analog | `sg13g2_IOPadAnalog` | direct pad ↔ core analog connection |
-| Power / ground | `sg13g2_IOPad{Vdd,Vss,IOVdd,IOVss}` | core (1.2 V) and I/O (3.3 V) supply pads |
+| Power / ground | `sg13g2_IOPad{Vdd, Vss, IOVdd, IOVss}` | core (1.2 V) and I/O (3.3 V) supply pads |
 | Corner | `sg13g2_Corner` | die-corner cell that turns the ring 90° |
 | Filler | `sg13g2_Filler{200…10000}` | close the gaps between pads and continue the rails |
 
@@ -176,7 +192,7 @@ Run it with:
 
 ---
 
-# 5. Defining the ring in Verilog (excerpt, line by line)
+# 5. Defining the ring in Verilog (line by line)
 
 The pad ring's *contents* are one I/O-cell instantiation per pin in the chip top
 (`src/chip_top.v`). The instance **names** chosen here are exactly the handles the placer uses in
@@ -242,7 +258,7 @@ match `src/chip_top.v`.](fig/padring_schematic.png){width=100%}
 
 ---
 
-# 6. Assigning pads to sides in `config.yaml` (line by line)
+# 6. Assigning pads to sides in `config.yaml`
 
 The floorplan-side of the method is the pad configuration. The essential block:
 
@@ -386,7 +402,7 @@ PDK**. No other foundry's libraries, rules or documentation are used or referenc
 
 | Tool / library | Version | License | Role |
 |---|---|---|---|
-| [IHP-Open-PDK](https://github.com/IHP-GmbH/IHP-Open-PDK) (`ihp-sg13g2`) | commit `144f811c` | Apache-2.0 | Process kit: `sg13g2_io` pad cells (LEF/GDS/Verilog/Liberty), `sg13g2_stdcell`, LibreLane tech config, KLayout `.lyp` |
+| [IHP-Open-PDK](https://github.com/IHP-GmbH/IHP-Open-PDK) (`ihp-sg13g2`) | commit `144f811c` | Apache-2.0 | Process kit: `sg13g2_io` pad cells (LEF, GDS, Verilog, Liberty), `sg13g2_stdcell`, LibreLane tech config, KLayout `.lyp` |
 | — `sg13g2_io` cell library | (in PDK) | Apache-2.0 | I/O pads, corner and filler cells; generated from Chips4Makers [`c4m-pdk-ihpsg13g2`](https://gitlab.com/Chips4Makers/c4m-pdk-ihpsg13g2) v0.0.4 plus contributed Liberty/Verilog views |
 | [LibreLane](https://github.com/librelane/librelane) | 3.1.0.dev1 | Apache-2.0 | Flow engine: `Chip` flow, `OpenROAD.PadRing` step, `pad_cfg.tcl` placement algorithm |
 | [OpenROAD](https://github.com/The-OpenROAD-Project/OpenROAD) | 26Q2-2270-g4c26918f5 | BSD-3-Clause | Floorplan, ODB, built-in pad placer (`make_io_sites`, `place_pad`, `place_corners`, `place_io_fill`, `connect_by_abutment`) |
@@ -401,7 +417,7 @@ PDK**. No other foundry's libraries, rules or documentation are used or referenc
 | Tool / library | Version | License | Role |
 |---|---|---|---|
 | [Pandoc](https://pandoc.org) | 3.1.3 | GPL-2.0-or-later | Markdown → LaTeX conversion (default LaTeX template) |
-| [Tectonic](https://tectonic-typesetting.github.io) | 0.15.0 | MIT | XeTeX-based LaTeX engine, LaTeX → PDF (any of tectonic/xelatex/lualatex/pdflatex works) |
+| [Tectonic](https://tectonic-typesetting.github.io) | 0.15.0 | MIT | XeTeX-based LaTeX engine, LaTeX → PDF (tectonic, xelatex, lualatex or pdflatex all work) |
 | [Matplotlib](https://matplotlib.org) | 3.11.0 | Matplotlib License (BSD-style) | Floor-plan figure generation |
 
 Notes:
